@@ -1,5 +1,6 @@
 import boto3
 import qdrant_client
+
 from langchain_community.vectorstores import Qdrant
 from langchain_community.embeddings import BedrockEmbeddings
 
