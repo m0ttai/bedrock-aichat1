@@ -8,7 +8,6 @@ from langchain_community.llms import Bedrock
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.vectorstores import Qdrant
 from langchain.chat_models import ChatOpenAI
-from langchain_community.callbacks import get_openai_callback
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
 
 QDRANT_PATH = "/home/rocky/aichat/bedrock-chat2/local_qdrant"
@@ -16,8 +15,7 @@ COLLECTION_NAME = "amazon-titan-embed-collection"  # Qdrantに保存されるコ
 REGION_NAME = "us-west-2"  # 使用するAWSリージョンの名前
 EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v1"  # テキスト埋め込みモデルのID
 BEDROCK_CHAT_MODEL_ID = "anthropic.claude-instant-v1"
-# OPENAI_CHAT_MODEL_ID = "gpt-3.5-turbo"
-# QUERY = "Amazon FSx for NetApp ONTAP の特徴を教えて"
+OPENAI_CHAT_MODEL_ID = "gpt-3.5-turbo"
 
 
 ##### Back-End #####
@@ -27,7 +25,7 @@ def generate_prompt():
 
 	Question: {question}
 
-	Answer in Japanese within the 200 characters the question based on the text provided.
+	Answer in Japanese within the 200 characters, and be sure to add "AIでございます！" at the beginning of your answer.
 
 	Assistant:
 	'''
@@ -50,8 +48,6 @@ def call_llm_bedrock(model_id):
 
 def build_qa_model(prompts, llm):
 	client = qdrant_client.QdrantClient(path=QDRANT_PATH)
-	# collections = client.get_collections().collections
-	# collection_names = [collection.name for collection in collections]
 	qdrant = Qdrant(
 		client = client,
 		collection_name = COLLECTION_NAME,  # コレクション名を指定
@@ -88,7 +84,6 @@ def ask(qa, messages):
 def init_page():
 	st.set_page_config(
 		page_title = "Hello RAG World !!!"
-		# page_icon = "🤗"
 	)
 	st.header("Hello RAG World!!!")
 	st.sidebar.title("<Optimize AI Menu>")
@@ -101,19 +96,11 @@ def init_messages():
 def select_model():
 	temperature = st.sidebar.slider("Set Temperature", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
 
-	model = st.sidebar.radio("Select Model", ("Claude", "OpenAI"))
-	if model == "Claude":
-		llm = call_llm_bedrock(BEDROCK_CHAT_MODEL_ID)
+	selected_model = st.sidebar.radio("Select Model", ("OpenAI", "Claude"))
+	if selected_model == "OpenAI":
+		llm = ChatOpenAI(temperature=temperature, model_name=OPENAI_CHAT_MODEL_ID)
 	else:
 		llm = call_llm_bedrock(BEDROCK_CHAT_MODEL_ID)
-
-	# model = st.sidebar.radio("Select Model", ("OpenAI", "Claude"))
-	# if model == "OpenAI":
-	# 	model_id = OPENAI_CHAT_MODEL_ID
-	# 	llm = ChatOpenAI(temperature=temperaturem, model_name=model_id)
-	# else:
-	# 	model_id = BEDROCK_CHAT_MODEL_ID
-	# 	llm = call_llm_bedrock(model_id)
 
 	return llm
 
@@ -125,6 +112,7 @@ def main():
 	prompts = generate_prompt()
 	llm = select_model()
 	qa = build_qa_model(prompts, llm)
+
 	init_messages()
 
 	if user_input := st.chat_input("Please Give me orders."):
