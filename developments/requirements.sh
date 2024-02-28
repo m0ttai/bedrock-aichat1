@@ -4,4 +4,4 @@
 curl -kL https://bootstrap.pypa.io/get-pip.py | python
 
 # Pythonのpipモジュールを使用して、複数のパッケージを一括でインストールする
-python -m pip install boto3 streamlit streamlit_chat langchain langchain-community bs4 PyPDF openai faiss-cpu
+python -m pip install boto3 streamlit streamlit_chat langchain langchain-community bs4 PyPDF PyPDF2 tiktoken openai faiss-cpu qdrant_client
